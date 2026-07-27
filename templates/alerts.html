@@ -1,0 +1,27 @@
+{% extends "layout.html" %}
+{% block title %}Alerts — {{ app_name }}{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <h1><i class="fa-solid fa-triangle-exclamation"></i> Weather Alerts</h1>
+  <p>Automatically generated whenever a searched city shows elevated rain, storm, heatwave or air-quality risk.</p>
+</section>
+
+{% if alerts %}
+<section class="alerts-feed">
+  {% for a in alerts %}
+  <div class="alert-banner sev-{{ a.severity }}">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <div>
+      <strong>{{ a.city }} · {{ a.alert_type }}</strong>
+      <span>{{ a.message }}</span>
+    </div>
+    <span class="alert-time">{{ a.created_at[:16].replace('T', ' ') }}</span>
+  </div>
+  {% endfor %}
+</section>
+{% else %}
+<div class="empty-state"><i class="fa-solid fa-shield-halved"></i><p>No alerts yet. Search a few cities to populate this feed.</p></div>
+{% endif %}
+
+{% endblock %}

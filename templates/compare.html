@@ -1,0 +1,73 @@
+{% extends "layout.html" %}
+{% block title %}Compare Cities — {{ app_name }}{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <h1><i class="fa-solid fa-shuffle"></i> Compare Cities</h1>
+  <p>Side-by-side atmospheric comparison, updated live.</p>
+  <form class="compare-form" method="get" action="{{ url_for('compare') }}">
+    <div class="compare-input"><i class="fa-solid fa-location-dot"></i><input type="text" name="city_a" value="{{ city_a }}" placeholder="City A"></div>
+    <span class="vs">VS</span>
+    <div class="compare-input"><i class="fa-solid fa-location-dot"></i><input type="text" name="city_b" value="{{ city_b }}" placeholder="City B"></div>
+    <button type="submit" class="btn-primary">Compare</button>
+  </form>
+</section>
+
+{% if not pkg_a or not pkg_b %}
+<div class="empty-state"><i class="fa-solid fa-cloud-slash"></i><p>One or both cities couldn't be found. Check the spelling and try again.</p></div>
+{% else %}
+
+<section class="compare-grid">
+  <div class="compare-card state-{{ pkg_a.condition_state }}">
+    <h2>{{ pkg_a.place.name }}</h2>
+    <span class="condition-label"><i class="fa-solid {{ pkg_a.condition_icon }}"></i> {{ pkg_a.condition_label }}</span>
+    <div class="compare-temp">{{ pkg_a.current.temperature_2m|round|int }}°</div>
+  </div>
+  <div class="compare-metrics">
+    <div class="cmp-row"><span>Feels like</span><b>{{ pkg_a.current.apparent_temperature|round|int }}°C</b><b>{{ pkg_b.current.apparent_temperature|round|int }}°C</b></div>
+    <div class="cmp-row"><span>Humidity</span><b>{{ pkg_a.current.relative_humidity_2m }}%</b><b>{{ pkg_b.current.relative_humidity_2m }}%</b></div>
+    <div class="cmp-row"><span>Wind</span><b>{{ pkg_a.current.wind_speed_10m }} km/h</b><b>{{ pkg_b.current.wind_speed_10m }} km/h</b></div>
+    <div class="cmp-row"><span>AQI</span><b>{{ pkg_a.aqi|round|int if pkg_a.aqi else '—' }}</b><b>{{ pkg_b.aqi|round|int if pkg_b.aqi else '—' }}</b></div>
+    <div class="cmp-row"><span>UV Index</span><b>{{ pkg_a.daily.uv_index_max[0]|round(1) if pkg_a.daily.uv_index_max else '—' }}</b><b>{{ pkg_b.daily.uv_index_max[0]|round(1) if pkg_b.daily.uv_index_max else '—' }}</b></div>
+    <div class="cmp-row"><span>Rain chance today</span><b>{{ pkg_a.daily.precipitation_probability_max[0] }}%</b><b>{{ pkg_b.daily.precipitation_probability_max[0] }}%</b></div>
+  </div>
+  <div class="compare-card state-{{ pkg_b.condition_state }}">
+    <h2>{{ pkg_b.place.name }}</h2>
+    <span class="condition-label"><i class="fa-solid {{ pkg_b.condition_icon }}"></i> {{ pkg_b.condition_label }}</span>
+    <div class="compare-temp">{{ pkg_b.current.temperature_2m|round|int }}°</div>
+  </div>
+</section>
+
+<section class="chart-card">
+  <h3>7-day max temperature — {{ pkg_a.place.name }} vs {{ pkg_b.place.name }}</h3>
+  <canvas id="compareChart" height="90"></canvas>
+</section>
+
+<script id="compareData" type="application/json">
+{{ {"labels": pkg_a.daily.time, "a": pkg_a.daily.temperature_2m_max, "b": pkg_b.daily.temperature_2m_max, "name_a": pkg_a.place.name, "name_b": pkg_b.place.name} | tojson }}
+</script>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{% if pkg_a and pkg_b %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const d = JSON.parse(document.getElementById('compareData').textContent);
+  new Chart(document.getElementById('compareChart'), {
+    type: 'bar',
+    data: {
+      labels: d.labels,
+      datasets: [
+        { label: d.name_a, data: d.a, backgroundColor: '#2DD4BF' },
+        { label: d.name_b, data: d.b, backgroundColor: '#8B5CF6' },
+      ]
+    },
+    options: { responsive: true, plugins: { legend: { labels: { color: '#94A3B8' } } },
+      scales: { x: { ticks: { color: '#94A3B8' }, grid: { display: false } }, y: { ticks: { color: '#94A3B8' }, grid: { color: 'rgba(148,163,184,0.15)' } } } }
+  });
+});
+</script>
+{% endif %}
+{% endblock %}

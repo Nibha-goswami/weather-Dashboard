@@ -1,0 +1,109 @@
+{% extends "layout.html" %}
+{% block title %}Analytics — {{ app_name }}{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <h1><i class="fa-solid fa-chart-line"></i> Weather Analytics</h1>
+  <p>Past 7 days of recorded history alongside the next 7 days of forecast for <strong>{{ city }}</strong>.</p>
+  <form class="inline-search" onsubmit="window.location.href='/analytics/' + encodeURIComponent(document.getElementById('analyticsCity').value); return false;">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <input id="analyticsCity" type="text" placeholder="Switch city…" value="{{ city }}">
+    <button type="submit" class="btn-primary">View</button>
+  </form>
+</section>
+
+{% if not chart_data %}
+<div class="empty-state"><i class="fa-solid fa-cloud-slash"></i><p>Couldn't load analytics for "{{ city }}". Try a different city name.</p></div>
+{% else %}
+
+<section class="analytics-grid">
+  <div class="chart-card">
+    <h3>Temperature trend (14-day window)</h3>
+    <canvas id="tempTrend" height="110"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Wind speed — past 7 days</h3>
+    <canvas id="windTrend" height="110"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Precipitation — past vs. forecast</h3>
+    <canvas id="precipTrend" height="110"></canvas>
+  </div>
+  <div class="chart-card">
+    <h3>Air quality snapshot</h3>
+    <canvas id="aqiTrend" height="110"></canvas>
+  </div>
+</section>
+
+<section class="stat-strip">
+  <div class="stat-pill"><span>Current AQI</span><b>{{ chart_data.current_aqi or '—' }}</b></div>
+  <div class="stat-pill"><span>PM2.5</span><b>{{ chart_data.current_pm25 or '—' }}</b></div>
+  <div class="stat-pill"><span>PM10</span><b>{{ chart_data.current_pm10 or '—' }}</b></div>
+  <div class="stat-pill"><span>Humidity now</span><b>{{ chart_data.humidity_now or '—' }}%</b></div>
+</section>
+
+<script id="analyticsData" type="application/json">{{ chart_data | tojson }}</script>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+{% if chart_data %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const d = JSON.parse(document.getElementById('analyticsData').textContent);
+  const teal = '#2DD4BF', violet = '#8B5CF6', amber = '#FBBF24', slate = '#94A3B8';
+
+  const allDates = [...d.past_dates, ...d.future_dates];
+  const pastMax = [...d.past_max, ...Array(d.future_dates.length).fill(null)];
+  const futMax = [...Array(d.past_dates.length).fill(null), ...d.future_max];
+  const pastMin = [...d.past_min, ...Array(d.future_dates.length).fill(null)];
+  const futMin = [...Array(d.past_dates.length).fill(null), ...d.future_min];
+
+  new Chart(document.getElementById('tempTrend'), {
+    type: 'line',
+    data: {
+      labels: allDates,
+      datasets: [
+        { label: 'Recorded max °C', data: pastMax, borderColor: teal, backgroundColor: 'transparent', tension: 0.35 },
+        { label: 'Forecast max °C', data: futMax, borderColor: teal, borderDash: [6,4], backgroundColor: 'transparent', tension: 0.35 },
+        { label: 'Recorded min °C', data: pastMin, borderColor: violet, backgroundColor: 'transparent', tension: 0.35 },
+        { label: 'Forecast min °C', data: futMin, borderColor: violet, borderDash: [6,4], backgroundColor: 'transparent', tension: 0.35 },
+      ]
+    },
+    options: { responsive: true, plugins: { legend: { labels: { color: slate } } },
+      scales: { x: { ticks: { color: slate }, grid: { display:false } }, y: { ticks: { color: slate }, grid: { color: 'rgba(148,163,184,0.15)' } } } }
+  });
+
+  new Chart(document.getElementById('windTrend'), {
+    type: 'bar',
+    data: { labels: d.past_dates, datasets: [{ label: 'Max wind (km/h)', data: d.past_wind, backgroundColor: violet }] },
+    options: { responsive: true, plugins: { legend: { labels: { color: slate } } },
+      scales: { x: { ticks: { color: slate }, grid: { display:false } }, y: { ticks: { color: slate }, grid: { color: 'rgba(148,163,184,0.15)' } } } }
+  });
+
+  new Chart(document.getElementById('precipTrend'), {
+    type: 'bar',
+    data: {
+      labels: allDates,
+      datasets: [
+        { label: 'Recorded precip (mm)', data: [...d.past_precip, ...Array(d.future_dates.length).fill(null)], backgroundColor: teal },
+        { label: 'Forecast rain chance (%)', data: [...Array(d.past_dates.length).fill(null), ...d.future_rain_prob], backgroundColor: amber },
+      ]
+    },
+    options: { responsive: true, plugins: { legend: { labels: { color: slate } } },
+      scales: { x: { ticks: { color: slate }, grid: { display:false } }, y: { ticks: { color: slate }, grid: { color: 'rgba(148,163,184,0.15)' } } } }
+  });
+
+  new Chart(document.getElementById('aqiTrend'), {
+    type: 'doughnut',
+    data: {
+      labels: ['PM2.5', 'PM10', 'Remaining to 100 AQI'],
+      datasets: [{ data: [d.current_pm25 || 0, d.current_pm10 || 0, Math.max(0, 100 - (d.current_aqi || 0))], backgroundColor: [teal, violet, 'rgba(148,163,184,0.25)'] }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { color: slate } } } }
+  });
+});
+</script>
+{% endif %}
+{% endblock %}

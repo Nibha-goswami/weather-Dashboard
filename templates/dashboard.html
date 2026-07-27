@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard — {{ app_name }}{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <h1><i class="fa-solid fa-gauge"></i> Your Dashboard</h1>
+  <p>Saved cities, search activity, and personal weather statistics.</p>
+</section>
+
+<section class="stat-strip">
+  <div class="stat-pill"><span>Total searches</span><b>{{ total_searches }}</b></div>
+  <div class="stat-pill"><span>Most searched city</span><b>{{ top_city }}</b></div>
+  <div class="stat-pill"><span>Saved favorites</span><b>{{ favorites|length }}</b></div>
+</section>
+
+<section class="dash-columns">
+  <div class="dash-col">
+    <div class="section-head"><h2><i class="fa-solid fa-star"></i> Favorite locations</h2></div>
+    {% if favorite_snapshots %}
+    <div class="fav-grid">
+      {% for f in favorite_snapshots %}
+      <a href="{{ url_for('weather_detail', city=f.city) }}" class="fav-card state-{{ f.state }}">
+        <i class="fa-solid {{ f.icon }}"></i>
+        <div>
+          <h4>{{ f.city }}</h4>
+          <span>{{ f.country }}</span>
+        </div>
+        <b>{{ f.temp|round|int if f.temp is not none else '—' }}°</b>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state small"><i class="fa-regular fa-star"></i><p>No favorites yet — star a city from its weather page to pin it here.</p></div>
+    {% endif %}
+  </div>
+
+  <div class="dash-col">
+    <div class="section-head"><h2><i class="fa-solid fa-clock-rotate-left"></i> Search history</h2></div>
+    {% if history %}
+    <div class="history-list">
+      {% for h in history %}
+      <a href="{{ url_for('weather_detail', city=h.city) }}" class="history-row">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span class="history-city">{{ h.city }}{% if h.country %}, {{ h.country }}{% endif %}</span>
+        <span class="history-time">{{ h.searched_at[:16].replace('T', ' ') }}</span>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state small"><i class="fa-solid fa-magnifying-glass"></i><p>Search a city to build your history.</p></div>
+    {% endif %}
+  </div>
+</section>
+
+{% endblock %}

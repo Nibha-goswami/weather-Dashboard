@@ -1,0 +1,169 @@
+{% extends "layout.html" %}
+{% block title %}{{ city }} Weather — {{ app_name }}{% endblock %}
+{% block content %}
+
+<section class="city-hero state-{{ condition_state }}">
+  <div class="city-hero-top">
+    <div>
+      <span class="eyebrow"><i class="fa-solid fa-location-dot"></i> {{ place.get('admin1','') }}{% if place.get('admin1') %}, {% endif %}{{ place.get('country','') }}</span>
+      <h1>{{ city }}</h1>
+      <p class="condition-label"><i class="fa-solid {{ condition_icon }}"></i> {{ condition_label }}</p>
+    </div>
+    <div class="city-hero-actions">
+      <button id="favBtn" class="icon-btn {{ 'active' if is_favorite else '' }}"
+              data-city="{{ city }}" data-country="{{ place.get('country','') }}"
+              data-lat="{{ place.latitude }}" data-lon="{{ place.longitude }}"
+              data-fav="{{ 'true' if is_favorite else 'false' }}">
+        <i class="fa-{{ 'solid' if is_favorite else 'regular' }} fa-star"></i>
+      </button>
+      <a class="icon-btn" href="{{ url_for('report_pdf', city=city) }}" title="Download PDF report"><i class="fa-solid fa-file-pdf"></i></a>
+      <button id="shareBtn" class="icon-btn" title="Copy shareable link" data-url="{{ request.url }}"><i class="fa-solid fa-share-nodes"></i></button>
+    </div>
+  </div>
+
+  <div class="temp-display">
+    <span class="temp-num">{{ current.temperature_2m|round|int }}°</span>
+    <div class="temp-meta">
+      <span>Feels like {{ current.apparent_temperature|round|int }}°C</span>
+      <span>{{ place.timezone if place.timezone else '' }}</span>
+    </div>
+  </div>
+
+  <div class="metric-grid">
+    <div class="metric"><i class="fa-solid fa-droplet"></i><b>{{ current.relative_humidity_2m }}%</b><span>Humidity</span></div>
+    <div class="metric"><i class="fa-solid fa-wind"></i><b>{{ current.wind_speed_10m }} km/h</b><span>Wind</span></div>
+    <div class="metric"><i class="fa-solid fa-eye"></i><b>{{ (current.visibility / 1000)|round(1) if current.visibility else '—' }} km</b><span>Visibility</span></div>
+    <div class="metric"><i class="fa-solid fa-gauge"></i><b>{{ current.pressure_msl }} hPa</b><span>Pressure</span></div>
+    <div class="metric"><i class="fa-solid fa-sun"></i><b>{{ daily.uv_index_max[0]|round(1) if daily.uv_index_max else '—' }}</b><span>UV Index</span></div>
+    <div class="metric aqi-{{ aqi_class }}"><i class="fa-solid fa-smog"></i><b>{{ aqi|round|int if aqi else '—' }}</b><span>AQI · {{ aqi_label }}</span></div>
+    <div class="metric"><i class="fa-solid fa-sunrise"></i><b>{{ daily.sunrise[0][-5:] if daily.sunrise else '—' }}</b><span>Sunrise</span></div>
+    <div class="metric"><i class="fa-solid fa-sunset"></i><b>{{ daily.sunset[0][-5:] if daily.sunset else '—' }}</b><span>Sunset</span></div>
+  </div>
+</section>
+
+{% if alerts %}
+<section class="alert-banner-stack">
+  {% for atype, msg, sev in alerts %}
+  <div class="alert-banner sev-{{ sev }}">
+    <i class="fa-solid fa-triangle-exclamation"></i>
+    <div><strong>{{ atype }} alert</strong><span>{{ msg }}</span></div>
+  </div>
+  {% endfor %}
+</section>
+{% endif %}
+
+<section class="ai-panel">
+  <div class="section-head"><h2><i class="fa-solid fa-brain"></i> AI Weather Intelligence</h2></div>
+  <div class="ai-grid">
+    <div class="ai-card wide">
+      <h3>Weather insight</h3>
+      <p>{{ ai.summary }}</p>
+    </div>
+    <div class="ai-card">
+      <h3><i class="fa-solid fa-shirt"></i> Outfit</h3>
+      <ul>{% for tip in ai.outfit %}<li>{{ tip }}</li>{% endfor %}</ul>
+    </div>
+    <div class="ai-card">
+      <h3><i class="fa-solid fa-plane"></i> Travel</h3>
+      <p>{{ ai.travel }}</p>
+    </div>
+    <div class="ai-card">
+      <h3><i class="fa-solid fa-heart-pulse"></i> Health advisory</h3>
+      <ul>{% for tip in ai.health %}<li>{{ tip }}</li>{% endfor %}</ul>
+    </div>
+    <div class="ai-card">
+      <h3><i class="fa-solid fa-person-running"></i> Activity</h3>
+      <p>{{ ai.activity }}</p>
+    </div>
+    <div class="ai-card wide">
+      <h3>Risk prediction</h3>
+      <div class="risk-row">
+        <div class="risk-item">
+          <div class="risk-label"><span>Rain risk</span><span>{{ ai.risks.rain }}%</span></div>
+          <div class="risk-bar"><div class="risk-fill rain" style="width:{{ ai.risks.rain }}%"></div></div>
+        </div>
+        <div class="risk-item">
+          <div class="risk-label"><span>Storm risk</span><span>{{ ai.risks.storm }}%</span></div>
+          <div class="risk-bar"><div class="risk-fill storm" style="width:{{ ai.risks.storm }}%"></div></div>
+        </div>
+        <div class="risk-item">
+          <div class="risk-label"><span>Heatwave risk</span><span>{{ ai.risks.heatwave }}%</span></div>
+          <div class="risk-bar"><div class="risk-fill heat" style="width:{{ ai.risks.heatwave }}%"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hourly-section">
+  <div class="section-head"><h2>Todays's Hourly Forecast</h2></div>
+  <div class="hourly-scroll" id="hourlyScroll">
+    {% for i in range(24) %} 
+    {% set code = hourly.weather_code[i] if hourly.weather_code and i < hourly.weather_code|length else 0 %}
+    <div class="hour-card">
+      <span class="hour-time">{{ hourly.time[i][-5:] if hourly.time and i < hourly.time|length else '' }}</span>
+      <i class="fa-solid fa-cloud"></i>
+      <span class="hour-temp">{{ hourly.temperature_2m[i]|round|int if hourly.temperature_2m and i < hourly.temperature_2m|length else '—' }}°</span>
+      <span class="hour-rain"><i class="fa-solid fa-droplet"></i> {{ hourly.precipitation_probability[i] if hourly.precipitation_probability and i < hourly.precipitation_probability|length else 0 }}%</span>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="chart-card">
+    <canvas id="hourlyChart" height="90"></canvas>
+  </div>
+</section>
+
+<section class="daily-section">
+  <div class="section-head"><h2>7-day forecast</h2></div>
+  <div class="daily-grid">
+    {% for i in range(daily.time|length) %}
+    <div class="day-card">
+      <span class="day-name">{{ daily.time[i] }}</span>
+      <i class="fa-solid fa-cloud-sun"></i>
+      <div class="day-temps"><b>{{ daily.temperature_2m_max[i]|round|int }}°</b><span>{{ daily.temperature_2m_min[i]|round|int }}°</span></div>
+      <span class="day-rain"><i class="fa-solid fa-droplet"></i> {{ daily.precipitation_probability_max[i] }}%</span>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<script id="hourlyData" type="application/json">
+{{ {"labels": hourly.time[:24] if hourly.time else [], "temps": hourly.temperature_2m[:24] if hourly.temperature_2m else []} | tojson }}
+</script>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const raw = document.getElementById('hourlyData');
+  if (!raw) return;
+  const data = JSON.parse(raw.textContent);
+  const ctx = document.getElementById('hourlyChart');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.labels.map(t => t.slice(-5)),
+      datasets: [{
+        label: 'Temperature (°C)',
+        data: data.temps,
+        borderColor: '#2DD4BF',
+        backgroundColor: 'rgba(45,212,191,0.15)',
+        fill: true,
+        tension: 0.4,
+        pointRadius: 0,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { display: false }, ticks: { color: '#94A3B8' } },
+        y: { grid: { color: 'rgba(148,163,184,0.15)' }, ticks: { color: '#94A3B8' } },
+      }
+    }
+  });
+});
+</script>
+{% endblock %}

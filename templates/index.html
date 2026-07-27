@@ -1,0 +1,101 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<section class="hero">
+  <div class="hero-inner">
+    <span class="eyebrow"><i class="fa-solid fa-satellite-dish"></i> Live atmospheric intelligence</span>
+    <h1>Read the sky like<br><span class="accent">an instrument panel.</span></h1>
+    <p class="hero-sub">
+      WeatherSphere AI turns raw atmospheric data into readable forecasts, risk scores,
+      and AI-generated guidance — for any city on Earth, updated in real time.
+    </p>
+
+    <form class="hero-search" id="heroSearchForm" autocomplete="off">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="heroSearchInput" placeholder="Try “Tokyo”, “London”, or “Mumbai”…" required>
+      <button type="button" id="heroVoiceBtn" title="Voice search"><i class="fa-solid fa-microphone"></i></button>
+      <button type="button" id="heroGeoBtn" title="Use my location"><i class="fa-solid fa-location-crosshairs"></i></button>
+      <button type="submit" class="btn-primary">Get Forecast</button>
+      <div id="heroSuggestions" class="suggestions"></div>
+    </form>
+    {% if error %}<p class="form-error"><i class="fa-solid fa-triangle-exclamation"></i> {{ error }}</p>{% endif %}
+
+    <div class="hero-stats">
+      <div><strong>190+</strong><span>Countries covered</span></div>
+      <div><strong>7-day</strong><span>Forecast horizon</span></div>
+      <div><strong>Live</strong><span>Air quality index</span></div>
+    </div>
+  </div>
+
+  <div class="hero-dial" aria-hidden="true">
+    <svg viewBox="0 0 240 240" class="dial-svg">
+      <circle cx="120" cy="120" r="104" class="dial-ring-bg"/>
+      <circle cx="120" cy="120" r="104" class="dial-ring-fg" stroke-dasharray="653" stroke-dashoffset="180"/>
+      <circle cx="120" cy="120" r="78" class="dial-ring-bg2"/>
+      <text x="120" y="112" class="dial-num">27°</text>
+      <text x="120" y="138" class="dial-label">FEELS 29°</text>
+    </svg>
+    <div class="dial-caption"><i class="fa-solid fa-wind"></i> 12 km/h &nbsp;·&nbsp; <i class="fa-solid fa-droplet"></i> 58%</div>
+  </div>
+</section>
+
+<section class="trending">
+  <div class="section-head">
+    <h2>Trending cities</h2>
+    <span class="section-sub">Most-watched locations right now</span>
+  </div>
+  <div class="chip-row">
+    {% for city in trending %}
+    <a class="chip" href="{{ url_for('weather_detail', city=city) }}"><i class="fa-solid fa-location-dot"></i> {{ city }}</a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="features">
+  <div class="section-head">
+    <h2>Built like a real weather desk</h2>
+    <span class="section-sub">Every module a meteorologist would expect — automated</span>
+  </div>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-chart-line"></i></div>
+      <h3>Analytics dashboard</h3>
+      <p>14-day temperature, wind, humidity and AQI trends rendered with Chart.js — past history plus forecast, side by side.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-shuffle"></i></div>
+      <h3>City comparison</h3>
+      <p>Put two cities head-to-head across temperature, air quality, wind and 7-day outlook.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-brain"></i></div>
+      <h3>AI insight engine</h3>
+      <p>Rule-driven natural-language summaries covering outfit, travel, health and activity recommendations.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <h3>Risk & alerts</h3>
+      <p>Automatic rain, storm, heatwave and air-quality alerts with severity banners.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-file-pdf"></i></div>
+      <h3>Exportable reports</h3>
+      <p>Download a branded PDF snapshot of any city's current conditions and outlook.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon"><i class="fa-solid fa-microphone"></i></div>
+      <h3>Voice & geolocation search</h3>
+      <p>Speak a city name or auto-detect your location — no typing required.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="cta-inner">
+    <h2>Pick a city. See the whole atmosphere.</h2>
+    <p>Current conditions, hourly timeline, 7-day outlook, AI guidance and risk scores in one view.</p>
+    <a href="{{ url_for('weather_detail', city='New Delhi') }}" class="btn-primary">Explore New Delhi</a>
+  </div>
+</section>
+
+{% endblock %}

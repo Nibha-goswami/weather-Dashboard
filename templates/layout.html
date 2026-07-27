@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}{{ app_name }} — Weather Intelligence{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<div class="sky-field" aria-hidden="true">
+  <div class="aurora aurora-a"></div>
+  <div class="aurora aurora-b"></div>
+  <div class="stars"></div>
+</div>
+
+<header class="navbar">
+  <div class="nav-inner">
+    <a href="{{ url_for('index') }}" class="brand">
+      <span class="brand-mark"><i class="fa-solid fa-cloud-bolt"></i></span>
+      <span class="brand-text">WeatherSphere<span class="brand-accent">AI</span></span>
+    </a>
+
+    <nav class="nav-links" id="navLinks">
+      <a href="{{ url_for('index') }}">Home</a>
+      <a href="{{ url_for('analytics') }}">Analytics</a>
+      <a href="{{ url_for('compare') }}">Compare</a>
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      <a href="{{ url_for('alerts_page') }}">Alerts</a>
+    </nav>
+
+    <div class="nav-actions">
+      <form class="nav-search" action="{{ url_for('index') }}" method="get" onsubmit="return false;">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input type="text" id="navSearchInput" placeholder="Search a city…" autocomplete="off">
+        <button type="button" id="navVoiceBtn" title="Voice search"><i class="fa-solid fa-microphone"></i></button>
+        <div id="navSuggestions" class="suggestions"></div>
+      </form>
+      <button id="themeToggle" class="icon-btn" title="Toggle theme">
+        <i class="fa-solid fa-moon"></i>
+      </button>
+      <button id="navBurger" class="icon-btn burger" title="Menu"><i class="fa-solid fa-bars"></i></button>
+    </div>
+  </div>
+</header>
+
+<main class="page">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <span class="brand-mark"><i class="fa-solid fa-cloud-bolt"></i></span>
+      <span>WeatherSphere<span class="brand-accent">AI</span></span>
+    </div>
+    <p class="footer-tag">Instrument-grade forecasting, AI-generated insight, and live atmospheric analytics — in one dashboard.</p>
+    <div class="footer-cols">
+      <div>
+        <h4>Platform</h4>
+        <a href="{{ url_for('index') }}">Home</a>
+        <a href="{{ url_for('analytics') }}">Analytics</a>
+        <a href="{{ url_for('compare') }}">Compare Cities</a>
+      </div>
+      <div>
+        <h4>Account</h4>
+        <a href="{{ url_for('dashboard') }}">Dashboard</a>
+        <a href="{{ url_for('alerts_page') }}">Alerts</a>
+      </div>
+      <div>
+        <h4>Data</h4>
+        <span>Open-Meteo API</span>
+        <span>Updated in real time</span>
+      </div>
+    </div>
+    <div class="footer-bottom">© 2026 WeatherSphere AI · Built for demonstration purposes</div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>
